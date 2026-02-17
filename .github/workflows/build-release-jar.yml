@@ -2,13 +2,10 @@ name: Build Release Jar
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [main, master]
   pull_request:
   release:
-    types:
-      - published
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -17,8 +14,6 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout repository
@@ -28,8 +23,9 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
           cache: maven
+          cache-dependency-path: HidePlayers/pom.xml
 
       - name: Build plugin jar
         run: mvn -f HidePlayers/pom.xml --batch-mode clean package
@@ -45,17 +41,18 @@ jobs:
       - name: Locate release jar
         if: github.event_name == 'release'
         id: locate_jar
+        shell: bash
         run: |
-          JAR_PATH=$(find HidePlayers/target -maxdepth 1 -type f -name '*.jar' ! -name 'original-*.jar' | head -n 1)
-          if [ -z "$JAR_PATH" ]; then
+          set -euo pipefail
+          JAR_PATH="$(find HidePlayers/target -maxdepth 1 -type f -name '*.jar' ! -name 'original-*.jar' | head -n 1)"
+          if [[ -z "${JAR_PATH}" ]]; then
             echo "No release jar found in HidePlayers/target" >&2
             exit 1
           fi
-          echo "jar_path=$JAR_PATH" >> "$GITHUB_OUTPUT"
+          echo "jar_path=${JAR_PATH}" >> "$GITHUB_OUTPUT"
 
       - name: Upload jar to GitHub Release
         if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v2
-        with:
-          token: ${{ secrets.GH_RELEASE_TOKEN || github.token }}
-          files: ${{ steps.locate_jar.outputs.jar_path }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.locate_jar.outputs.jar_path }}" --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
