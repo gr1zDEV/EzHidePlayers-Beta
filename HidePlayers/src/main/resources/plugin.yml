@@ -1,0 +1,17 @@
+name: HidePlayers
+version: '1.0.0'
+main: com.ezinnovations.hideplayers.HidePlayers
+api-version: '1.20'
+authors: [EzInnovations]
+commands:
+  hideplayers:
+    description: Toggle player visibility for yourself
+    usage: /hideplayers
+    permission: ezhideplayer
+permissions:
+  ezhideplayer:
+    description: Allows using /hideplayers
+    default: true
+  ezhideplayer.bypass:
+    description: Makes player always visible to everyone
+    default: op
