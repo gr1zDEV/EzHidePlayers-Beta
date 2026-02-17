@@ -1,0 +1,12 @@
+allowed-worlds:
+  - "lobby"
+
+disabled-worlds: []
+
+force-show-in-disabled-worlds: true
+
+messages:
+  enabled: "&aPlayers hidden."
+  disabled: "&ePlayers visible."
+  no-permission: "&cNo permission."
+  world-disabled: "&cYou cannot toggle hideplayers in this world."
