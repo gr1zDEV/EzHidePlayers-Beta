@@ -1,0 +1,55 @@
+name: Build Release Jar
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Build plugin jar
+        run: mvn -f HidePlayers/pom.xml --batch-mode clean package
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HidePlayers-jar
+          path: |
+            HidePlayers/target/*.jar
+            !HidePlayers/target/original-*.jar
+
+      - name: Locate release jar
+        if: github.event_name == 'release'
+        id: locate_jar
+        run: |
+          JAR_PATH=$(find HidePlayers/target -maxdepth 1 -type f -name '*.jar' ! -name 'original-*.jar' | head -n 1)
+          if [ -z "$JAR_PATH" ]; then
+            echo "No release jar found in HidePlayers/target" >&2
+            exit 1
+          fi
+          echo "jar_path=$JAR_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Upload jar to GitHub Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.locate_jar.outputs.jar_path }}
